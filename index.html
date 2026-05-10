@@ -495,7 +495,7 @@
 
         let currentZoom = 1.0;
         const ZOOM_STEP = 0.1;
-        const MAX_ZOOM = 3.0;
+        const MAX_ZOOM = 10.0;
         const MIN_ZOOM = 0.5;
         let isPanning = false;
         let hasDragged = false; 
@@ -1185,6 +1185,7 @@
                 applyTransform();
             } else if (e.touches.length === 2 && initialPinchDistance) {
                 e.preventDefault(); 
+                hasDragged = true; 
                 const currentDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                 const scale = currentDistance / initialPinchDistance;
                 currentZoom = Math.min(Math.max(MIN_ZOOM, initialZoom * scale), MAX_ZOOM);
