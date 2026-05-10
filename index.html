@@ -289,9 +289,15 @@
                 
                 <p id="loading-status" class="text-sm font-semibold text-[#d4a373] mt-2 mb-4 animate-pulse">Menyiapkan halaman...</p>
 
-                <div class="w-full bg-[#1f140d] rounded-full h-4 overflow-hidden shadow-inner border border-[#582f0e]">
+                <div id="progress-container" class="w-full bg-[#1f140d] rounded-full h-4 overflow-hidden shadow-inner border border-[#582f0e]">
                     <div id="progress-bar" class="bg-gradient-to-r from-[#3e2723] via-[#a3b18a] to-[#3e2723] h-full rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
                 </div>
+
+                <!-- Tombol Buka Album -->
+                <button id="btn-open-album" class="hidden mt-6 px-8 py-3 bg-[#3e2723] hover:bg-[#582f0e] text-[#faedcd] border border-[#a3b18a] font-bold rounded-full shadow-[0_0_15px_rgba(163,177,138,0.4)] hover:scale-105 transition transform flex items-center justify-center space-x-2 mx-auto">
+                    <i class="fas fa-book-open"></i>
+                    <span>Buka Album</span>
+                </button>
             </div>
         </div>
 
@@ -518,6 +524,9 @@
         const shadowLeft = document.getElementById('shadow-left');
         const shadowRight = document.getElementById('shadow-right');
         const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        const loadingStatus = document.getElementById('loading-status');
+        const btnOpenAlbum = document.getElementById('btn-open-album');
         
         const btnPrev = document.getElementById('btn-prev');
         const btnNext = document.getElementById('btn-next');
@@ -586,9 +595,10 @@
                 setTimeout(() => {
                     progressBar.style.width = '100%';
                     setTimeout(() => {
-                        loadingScreen.classList.add('hidden');
-                        flipbookWrapper.classList.remove('hidden');
-                        updateBookSize();
+                        loadingStatus.innerText = "Siap Dibaca!";
+                        loadingStatus.classList.remove('animate-pulse');
+                        progressContainer.classList.add('hidden');
+                        btnOpenAlbum.classList.remove('hidden');
                     }, 500);
                 }, 500);
             };
@@ -597,38 +607,45 @@
                 alert("Gagal memuat gambar pertama. Pastikan folder 'pages' ada dan nama file page_001.webp");
                 bookContainer.style.aspectRatio = "1.5";
                 buildFlipbookDOM();
-                loadingScreen.classList.add('hidden');
-                flipbookWrapper.classList.remove('hidden');
+                progressContainer.classList.add('hidden');
+                loadingStatus.classList.add('hidden');
+                btnOpenAlbum.classList.remove('hidden');
             };
         });
 
-        function initAudioOnFirstInteraction() {
-            // Meminta mode layar penuh otomatis pada sentuhan/klik pertama
+        // Event saat tombol Buka Album ditekan
+        btnOpenAlbum.addEventListener('click', () => {
+            // 1. Meminta mode layar penuh secara aman
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
-                    console.log("Layar penuh dicegah oleh browser sebelum ada interaksi:", err);
+                    console.log("Layar penuh dicegah browser:", err);
                 });
             }
 
-            if (!isAudioInitiated && !isMuted) {
-                bgmPlayer.volume = bgmVolume;
-                let playPromise = bgmPlayer.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        isAudioInitiated = true;
-                        muteIcon.className = 'fas fa-volume-up text-[#a3b18a]';
-                    }).catch(e => {
-                        console.log("Auto-play audio diblokir", e);
-                        isMuted = true;
-                        bgmPlayer.muted = true;
-                        muteIcon.className = 'fas fa-volume-mute text-[#d4a373]';
-                    });
-                }
+            // 2. Inisiasi Audio
+            bgmPlayer.volume = bgmVolume;
+            let playPromise = bgmPlayer.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    isAudioInitiated = true;
+                    muteIcon.className = 'fas fa-volume-up text-[#a3b18a]';
+                }).catch(e => {
+                    console.log("Auto-play audio diblokir", e);
+                    isMuted = true;
+                    bgmPlayer.muted = true;
+                    muteIcon.className = 'fas fa-volume-mute text-[#d4a373]';
+                });
             }
-        }
 
-        document.body.addEventListener('click', initAudioOnFirstInteraction, { once: true });
-        document.body.addEventListener('touchstart', initAudioOnFirstInteraction, { once: true });
+            // 3. Menutup layar loading dengan transisi
+            loadingScreen.style.transition = "opacity 0.5s ease";
+            loadingScreen.style.opacity = "0";
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+                flipbookWrapper.classList.remove('hidden');
+                updateBookSize();
+            }, 500);
+        });
 
         btnMute.addEventListener('click', (e) => {
             e.stopPropagation(); 
